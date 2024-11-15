@@ -2,29 +2,27 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"net/http"
-	"strings"
-
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
-// Структура для декодирования JSON
-type requestBody struct {
-	Message string `json:"message"`
-}
-
 // Глобальная переменная для хранения сообщения
-var task string
 
 func main() {
-	router := mux.NewRouter()
+	// Вызываем метод InitDB() из файла db.go
+	InitDB()
 
+	// Автоматическая миграция модели Message
+	DB.AutoMigrate(&Message{})
+
+	router := mux.NewRouter()
+	router.HandleFunc("/post", handlerPost).Methods("POST")
 	router.HandleFunc("/get", handlerGet).Methods("GET")
-	router.HandleFunc("/api/hello", handlerPost).Methods("POST")
 
 	// посылаю ПОСТ-запрос
-	http.Post("http://localhost:8080/api/hello", "application/json", strings.NewReader(`{"message": "World"}`))
+	//http.Post("http://localhost:8080/post", "application/json", strings.NewReader(`{
+	//"task": "Тестовая задача",
+	//"is_done": false}`))
 
 	http.ListenAndServe(":8080", router)
 
@@ -32,20 +30,24 @@ func main() {
 
 func handlerPost(w http.ResponseWriter, r *http.Request) {
 	// читаю тело запроса
-	var body requestBody
+	var task Message
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&body)
+	err := decoder.Decode(&task)
 	if err != nil {
 		http.Error(w, "Ошибка при декодировании JSON", http.StatusBadRequest)
 		return
 	}
-
-	// присвоил значение глобальной переменной
-	task = body.Message
-
+	DB.Create(&task)
+	// Ответ клиенту
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(task)
 }
 
 func handlerGet(w http.ResponseWriter, r *http.Request) {
-	// возвращаю текущее значение глобальной переменной
-	fmt.Fprintf(w, "Hello, %s\n", task)
+	var tasks []Message
+	DB.Find(&tasks)
+
+	// Ответ клиенту
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tasks)
 }
