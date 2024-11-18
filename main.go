@@ -3,17 +3,12 @@ package main
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
-	"log"
 	"net/http"
 	"strconv"
 )
 
-var IdCounter int = 0
-
 func PostHandlerPostTask(w http.ResponseWriter, r *http.Request) {
 	// читаю тело запроса
-	id := IdCounter
-	id++
 	var task Message
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&task)
@@ -40,7 +35,7 @@ func PatchHandlerPutTask(w http.ResponseWriter, r *http.Request) {
 	// получить айди из урла, так как строка, сделать конвертацию
 	params := mux.Vars(r)
 	taskID := params["id"]
-	log.Printf("Получено значение id: %s\n", taskID)
+
 	// конвертация строки в число
 	id, err := strconv.Atoi(taskID)
 	if err != nil {
@@ -54,7 +49,6 @@ func PatchHandlerPutTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Айди не найден", http.StatusBadRequest)
 		return
 	}
-	log.Printf("Найденная задача: %+v\n", task)
 
 	// меняю задачи task и is_done
 	var updateTask Message
@@ -64,7 +58,7 @@ func PatchHandlerPutTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Ошибка декодирования JSON", http.StatusBadRequest)
 		return
 	}
-	log.Printf("Получены новые данные: %+v\n", updateTask)
+
 	task.Task = updateTask.Task
 	task.IsDone = updateTask.IsDone
 	// Сохраняю в БД новые значения
