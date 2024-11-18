@@ -3,11 +3,17 @@ package main
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"log"
 	"net/http"
+	"strconv"
 )
+
+var IdCounter int = 0
 
 func PostHandlerPostTask(w http.ResponseWriter, r *http.Request) {
 	// читаю тело запроса
+	id := IdCounter
+	id++
 	var task Message
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&task)
@@ -30,22 +36,81 @@ func GetHandlerGetTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(tasks)
 }
 
+func PatchHandlerPutTask(w http.ResponseWriter, r *http.Request) {
+	// получить айди из урла, так как строка, сделать конвертацию
+	params := mux.Vars(r)
+	taskID := params["id"]
+	log.Printf("Получено значение id: %s\n", taskID)
+	// конвертация строки в число
+	id, err := strconv.Atoi(taskID)
+	if err != nil {
+		http.Error(w, "Неверный формат ID", http.StatusBadRequest)
+		return
+	}
+	// нахождение задачи по айдишнику
+	var task Message
+	result := DB.First(&task, id)
+	if result.Error != nil {
+		http.Error(w, "Айди не найден", http.StatusBadRequest)
+		return
+	}
+	log.Printf("Найденная задача: %+v\n", task)
+
+	// меняю задачи task и is_done
+	var updateTask Message
+	decoder := json.NewDecoder(r.Body)
+	err = decoder.Decode(&updateTask)
+	if err != nil {
+		http.Error(w, "Ошибка декодирования JSON", http.StatusBadRequest)
+		return
+	}
+	log.Printf("Получены новые данные: %+v\n", updateTask)
+	task.Task = updateTask.Task
+	task.IsDone = updateTask.IsDone
+	// Сохраняю в БД новые значения
+	DB.Save(&task)
+	// Отправляю ответ клиенту
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(task)
+}
+
+func DeleteHandlerDeleteTask(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	taskID := params["id"]
+
+	// конвертация
+	id, err := strconv.Atoi(taskID)
+	if err != nil {
+		http.Error(w, "Ошибка кон ID", http.StatusBadRequest)
+		return
+	}
+
+	var task Message
+	result := DB.First(&task, id)
+	if result.Error != nil {
+		http.Error(w, "Запись не найдена", http.StatusBadRequest)
+		return
+	}
+	if err := DB.Delete(&task).Error; err != nil {
+		http.Error(w, "Запись не удалена", http.StatusBadRequest)
+		return
+	}
+	// ответ клиенту
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(task)
+}
+
 func main() {
 	// Вызываем метод InitDB() из файла db.go
 	InitDB()
-
 	// Автоматическая миграция модели Message
 	DB.AutoMigrate(&Message{})
 
 	router := mux.NewRouter()
 	router.HandleFunc("/post", PostHandlerPostTask).Methods("POST")
 	router.HandleFunc("/get", GetHandlerGetTask).Methods("GET")
-
-	// посылаю ПОСТ-запрос
-	//http.Post("http://localhost:8080/post", "application/json", strings.NewReader(`{
-	//"task": "Тестовая задача",
-	//"is_done": false}`))
+	router.HandleFunc("/patch/{id}", PatchHandlerPutTask).Methods("PATCH")
+	router.HandleFunc("/delete/{id}", DeleteHandlerDeleteTask).Methods("DELETE")
 
 	http.ListenAndServe(":8080", router)
-
 }
