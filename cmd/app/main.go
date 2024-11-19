@@ -9,7 +9,7 @@ import (
 
 func PostHandlerPostTask(w http.ResponseWriter, r *http.Request) {
 	// читаю тело запроса
-	var task Message
+	var task Task
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&task)
 	if err != nil {
@@ -23,7 +23,7 @@ func PostHandlerPostTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetHandlerGetTask(w http.ResponseWriter, r *http.Request) {
-	var tasks []Message
+	var tasks []Task
 	DB.Find(&tasks)
 
 	// Ответ клиенту
@@ -43,7 +43,7 @@ func PatchHandlerPutTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// нахождение задачи по айдишнику
-	var task Message
+	var task Task
 	result := DB.First(&task, id)
 	if result.Error != nil {
 		http.Error(w, "Айди не найден", http.StatusBadRequest)
@@ -51,7 +51,7 @@ func PatchHandlerPutTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// меняю задачи task и is_done
-	var updateTask Message
+	var updateTask Task
 	decoder := json.NewDecoder(r.Body)
 	err = decoder.Decode(&updateTask)
 	if err != nil {
@@ -79,7 +79,7 @@ func DeleteHandlerDeleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var task Message
+	var task Task
 	result := DB.First(&task, id)
 	if result.Error != nil {
 		http.Error(w, "Запись не найдена", http.StatusBadRequest)
@@ -97,8 +97,8 @@ func DeleteHandlerDeleteTask(w http.ResponseWriter, r *http.Request) {
 func main() {
 	// Вызываем метод InitDB() из файла db.go
 	InitDB()
-	// Автоматическая миграция модели Message
-	DB.AutoMigrate(&Message{})
+	// Автоматическая миграция модели Task
+	DB.AutoMigrate(&Task{})
 
 	router := mux.NewRouter()
 	router.HandleFunc("/post", PostHandlerPostTask).Methods("POST")
