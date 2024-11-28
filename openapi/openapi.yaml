@@ -84,6 +84,102 @@ paths:
       responses:
         '200':
           description: Task deleted successfully
+  /users:
+    get:
+        summary: Получение списка всех пользователей
+        operationId: getUsers
+        tags:
+          - users
+        responses:
+          '200':
+            description: Успешный ответ
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/User'
+          '400':
+            description: Ошибка в запросе
+          '500':
+            description: Внутренняя ошибка сервера
+    post:
+      summary: Создание нового пользователя
+      operationId: createUser
+      tags:
+        - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: Пользователь успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Ошибка в запросе
+        '409':
+          description: Пользователь с таким именем уже существует
+        '500':
+          description: Внутренняя ошибка сервера
+  /users/{id}:
+    patch:
+      summary: Редактирование полей пользователя по его ID
+      operationId: updateUserByID
+      tags:
+        - users
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Идентификатор пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Пользователь успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Пользователь не найден
+        '400':
+          description: Ошибка в запросе
+        '500':
+          description: Внутренняя ошибка сервера
+    delete:
+      summary: Удаление пользователя по его ID
+      operationId: deleteUserByID
+      tags:
+        - users
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Идентификатор пользователя
+      responses:
+        '204':
+          description: Пользователь успешно удален
+        '404':
+          description: Пользователь не найден
+        '400':
+          description: Ошибка в запросе
+        '500':
+          description: Внутренняя ошибка сервера
 
 components:
   schemas:
@@ -97,3 +193,15 @@ components:
           type: string
         is_done:
           type: boolean
+    User :
+      type: object
+      properties:
+        id:
+          type: integer
+          format: uint
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password

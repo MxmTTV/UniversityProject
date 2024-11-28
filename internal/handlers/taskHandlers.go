@@ -93,7 +93,7 @@ func (h *Handler) DeleteTasksId(ctx context.Context, request tasks.DeleteTasksId
 
 // Нужна для создания структуры Handler на этапе инициализации приложения
 
-func NewHandler(service *taskService.TaskService) *Handler {
+func NewTaskHandler(service *taskService.TaskService) *Handler {
 	return &Handler{
 		Service: service,
 	}
