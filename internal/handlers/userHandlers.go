@@ -2,6 +2,7 @@ package handlers
 
 import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
+	"go.mod/internal/models"
 	"go.mod/internal/userService"
 	"go.mod/internal/web/users"
 	"golang.org/x/net/context"
@@ -32,7 +33,7 @@ func (h *UserHandler) CreateUser(ctx context.Context, request users.CreateUserRe
 	// читаем тело напрямую!!!
 	userRequest := request.Body
 	// обращаемся к сервису и создаём задачу
-	userCreate := userService.User{
+	userCreate := models.User{
 		Email:    string(*userRequest.Email),
 		Password: *userRequest.Password,
 	}
@@ -66,7 +67,7 @@ func (h *UserHandler) UpdateUserByID(ctx context.Context, request users.UpdateUs
 
 	userUpdate := request.Body
 
-	toUpdateUser := userService.User{
+	toUpdateUser := models.User{
 		Email:    string(*userUpdate.Email),
 		Password: *userUpdate.Password,
 	}

@@ -5,6 +5,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"go.mod/internal/database"
 	"go.mod/internal/handlers"
+	"go.mod/internal/models"
 	"go.mod/internal/taskService"
 	"go.mod/internal/userService"
 	"go.mod/internal/web/tasks"
@@ -14,25 +15,30 @@ import (
 
 func main() {
 	database.InitDB()
-	if err := database.DB.AutoMigrate(&taskService.Task{}); err != nil {
+
+	if err := database.DB.AutoMigrate(&models.Task{}); err != nil {
 		log.Fatalf("Ошибка: %v", err)
 	}
-	if err := database.DB.AutoMigrate(&userService.User{}); err != nil {
+	if err := database.DB.AutoMigrate(&models.User{}); err != nil {
 		log.Fatalf("Ошибка: %v", err)
 	}
 
+	// Создание репозитория для задач
 	taskRepo := taskService.NewTaskRepository(database.DB)
+	// Создание сервиса для задач, передаем taskRepo
 	taskService := taskService.NewTaskService(taskRepo)
 	taskHandler := handlers.NewTaskHandler(taskService)
 
+	// Создание репозитория для пользователей
 	userRepo := userService.NewUserRepository(database.DB)
-	userService := userService.NewUserService(userRepo)
+	// Создание сервиса для пользователей, теперь передаем taskRepo, чтобы сервис мог работать с задачами
+	userService := userService.NewUserService(userRepo, taskRepo)
 	userHandler := handlers.NewUserHandler(userService)
 
 	// Инициализируем echo
 	e := echo.New()
 
-	// используем Logger и Recover
+	// Используем Logger и Recover
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 

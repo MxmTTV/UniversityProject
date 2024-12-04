@@ -27,7 +27,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Task'
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  format: uint
+                  description: "ID пользователя, которому принадлежит задача"
+                  example: 1
+                task:
+                  type: string
+                  description: "Описание задачи"
+                  example: "Finish writing documentation"
+                is_done:
+                  type: boolean
+                  description: "Статус выполнения задачи"
+                  example: false
       responses:
         '201':
           description: The created task
@@ -84,6 +98,26 @@ paths:
       responses:
         '200':
           description: Task deleted successfully
+  /tasks/user/{id}:
+    get:
+      summary: Get tasks by user ID
+      tags:
+        - tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
   /users:
     get:
         summary: Получение списка всех пользователей
@@ -186,22 +220,39 @@ components:
     Task:
       type: object
       properties:
+        user_id:
+          type: integer
+          format: uint
+          description: "ID пользователя, которому принадлежит задача"
+          example: 1
         id:
           type: integer
-          format: uint # так как в БД айди это только положительные числа
+          format: uint
+          description: "Уникальный идентификатор задачи"
+          example: 101
         task:
           type: string
+          description: "Описание задачи"
+          example: "Finish writing documentation"
         is_done:
           type: boolean
-    User :
+          description: "Статус выполнения задачи"
+          example: false
+    User:
       type: object
       properties:
         id:
           type: integer
           format: uint
+          description: "Уникальный идентификатор пользователя"
+          example: 1
         email:
           type: string
           format: email
+          description: "Адрес электронной почты пользователя"
+          example: "user@example.com"
         password:
           type: string
           format: password
+          description: "Пароль пользователя"
+          example: "securepassword123"
