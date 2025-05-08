@@ -3,7 +3,7 @@ package handlers
 import (
 	"fmt"
 	"go.mod/internal/models"
-	"go.mod/internal/taskService" // Импортируем наш сервис
+	"go.mod/internal/taskService" // импорт сервиса
 	"go.mod/internal/web/tasks"
 	"golang.org/x/net/context"
 	"strconv"
@@ -13,23 +13,34 @@ type Handler struct {
 	Service *taskService.TaskService
 }
 
+// GetTasksUserId Метод получения всех задач определенного пользователя
 func (h *Handler) GetTasksUserId(ctx context.Context, request tasks.GetTasksUserIdRequestObject) (tasks.GetTasksUserIdResponseObject, error) {
-	// Здесь извлекаем ID пользователя из запроса
+	// Извлекаем ID пользователя из запроса
 	userID := request.Id
 
 	// Получаем задачи для указанного пользователя
-	_, err := h.Service.GetTasksByUserID(uint(userID))
+	tasksList, err := h.Service.GetTasksByUserID(uint(userID))
 	if err != nil {
-		return nil, err
+		// Возвращаем ошибку, если задачи не удалось получить
+		return nil, fmt.Errorf("failed to get tasks for user %d: %w", userID, err)
 	}
 
-	// Создаем ответ
+	// Формируем список задач в формате ответа
 	response := tasks.GetTasksUserId200JSONResponse{}
+	for _, task := range tasksList {
+		response = append(response, tasks.Task{
+			Id:     &task.ID,
+			IsDone: &task.IsDone,
+			Task:   &task.Task,
+			UserId: &task.UserID,
+		})
+	}
 
+	// Возвращаем успешный ответ
 	return response, nil
 }
 
-// Метод для получения всех задач
+// GetTasks Метод для получения всех задач
 func (h *Handler) GetTasks(ctx context.Context, request tasks.GetTasksRequestObject) (tasks.GetTasksResponseObject, error) {
 	allTasks, err := h.Service.GetAllTasks()
 	if err != nil {
@@ -48,7 +59,7 @@ func (h *Handler) GetTasks(ctx context.Context, request tasks.GetTasksRequestObj
 	return response, nil
 }
 
-// Метод для получения задач по user_id
+// GetTasksForUser Метод для получения задач по user_id
 func (h *Handler) GetTasksForUser(ctx context.Context, request tasks.GetTasksUserIdRequestObject) (tasks.GetTasksUserIdResponseObject, error) {
 	userID, err := strconv.Atoi(strconv.Itoa(int(request.Id))) // Получаем user_id из запроса
 	if err != nil {
@@ -73,7 +84,7 @@ func (h *Handler) GetTasksForUser(ctx context.Context, request tasks.GetTasksUse
 	return response, nil
 }
 
-// Метод для создания задачи
+// PostTasks Метод для создания задачи
 func (h *Handler) PostTasks(ctx context.Context, request tasks.PostTasksRequestObject) (tasks.PostTasksResponseObject, error) {
 	taskRequest := request.Body
 
@@ -104,7 +115,7 @@ func (h *Handler) PostTasks(ctx context.Context, request tasks.PostTasksRequestO
 	return response, nil
 }
 
-// Метод для обновления задачи
+// PatchTasksId Метод для обновления задачи
 func (h *Handler) PatchTasksId(ctx context.Context, request tasks.PatchTasksIdRequestObject) (tasks.PatchTasksIdResponseObject, error) {
 	id := request.Id
 	updateRequest := request.Body
@@ -128,7 +139,7 @@ func (h *Handler) PatchTasksId(ctx context.Context, request tasks.PatchTasksIdRe
 	return response, nil
 }
 
-// Метод для удаления задачи
+// DeleteTasksId Метод для удаления задачи
 func (h *Handler) DeleteTasksId(ctx context.Context, request tasks.DeleteTasksIdRequestObject) (tasks.DeleteTasksIdResponseObject, error) {
 	taskID := request.Id
 
@@ -141,7 +152,7 @@ func (h *Handler) DeleteTasksId(ctx context.Context, request tasks.DeleteTasksId
 	return response, nil
 }
 
-// Конструктор для создания Handler
+// NewTaskHandler ЫКонструктор для создания Handler
 func NewTaskHandler(service *taskService.TaskService) *Handler {
 	return &Handler{
 		Service: service,

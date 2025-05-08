@@ -4,8 +4,8 @@ type Task struct {
 	ID     uint   `gorm:"primaryKey"`
 	Task   string `json:"task"`
 	IsDone bool   `json:"is_done"`
-	UserID uint   `json:"user_id"` // Foreign key
-	User   User   `json:"user"`    // Определение связи с моделью User
+	UserID uint   `json:"user_id"`
+	User   User   `json:"user"` // Определение связи с моделью User
 }
 
 type User struct {

@@ -11,6 +11,7 @@ import (
 	"go.mod/internal/web/tasks"
 	"go.mod/internal/web/users"
 	"log"
+	"net/http"
 )
 
 func main() {
@@ -41,6 +42,10 @@ func main() {
 	// Используем Logger и Recover
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodDelete},
+	}))
 
 	// Прикол для работы в echo. Передаем и регистрируем хендлер в echo
 	strictTaskHandler := tasks.NewStrictHandler(taskHandler, nil) // тут будет ошибка

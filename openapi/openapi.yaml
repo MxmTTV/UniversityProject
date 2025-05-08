@@ -98,26 +98,6 @@ paths:
       responses:
         '200':
           description: Task deleted successfully
-  /tasks/user/{id}:
-    get:
-      summary: Get tasks by user ID
-      tags:
-        - tasks
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Task"
   /users:
     get:
         summary: Получение списка всех пользователей
@@ -161,6 +141,26 @@ paths:
           description: Пользователь с таким именем уже существует
         '500':
           description: Внутренняя ошибка сервера
+  /user/{id}/tasks:
+    get:
+      summary: Get tasks by user ID
+      tags:
+        - users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
   /users/{id}:
     patch:
       summary: Редактирование полей пользователя по его ID

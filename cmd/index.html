@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User & Task Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light p-4">
+    <div class="container">
+        <h1 class="mb-4">User & Task Manager</h1>
+
+        <div class="card mb-4">
+            <div class="card-header">Users</div>
+            <div class="card-body">
+                <button class="btn btn-primary mb-3" onclick="getUsers()">Get Users</button>
+
+                <div class="mb-3">
+                    <input class="form-control mb-2" id="userPassword" placeholder="Password">
+                    <input class="form-control mb-2" id="userEmail" placeholder="Email">
+                    <button class="btn btn-success" onclick="createUser()">Create User</button>
+                </div>
+
+                <div class="mb-3">
+                    <input class="form-control mb-2" id="editUserId" placeholder="User ID to edit">
+                    <input class="form-control mb-2" id="editUserEmail" placeholder="New Email">
+                    <input class="form-control mb-2" id="editUserPassword" placeholder="New Password">
+                    <button class="btn btn-warning" onclick="editUser()">Edit User</button>
+                </div>
+
+
+                <div class="mb-3">
+                    <input class="form-control mb-2" id="deleteUserId" placeholder="User ID to delete">
+                    <button class="btn btn-danger" onclick="deleteUser()">Delete User</button>
+                </div>
+
+                <pre id="usersOutput" class="bg-white p-3"></pre>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Tasks</div>
+            <div class="card-body">
+                <button class="btn btn-primary mb-3" onclick="getTasks()">Get All Tasks</button>
+
+                <div class="mb-3">
+                    <input class="form-control mb-2" id="taskContent" placeholder="Task Description">
+                    <input class="form-control mb-2" id="taskUserId" placeholder="User ID">
+                    <button class="btn btn-success" onclick="createTask()">Create Task</button>
+                </div>
+
+                <div class="mb-3">
+                    <input class="form-control mb-2" id="editTaskId" placeholder="Task ID to edit">
+                    <input class="form-control mb-2" id="editTaskContent" placeholder="New Description">
+                    <input class="form-control mb-2" id="editTaskDone" placeholder="is_done (true/false)">
+                    <button class="btn btn-warning" onclick="editTask()">Edit Task</button>
+                </div>
+
+                <div class="mb-3">
+                    <input class="form-control mb-2" id="deleteTaskId" placeholder="Task ID to delete">
+                    <button class="btn btn-danger" onclick="deleteTask()">Delete Task</button>
+                </div>
+
+                <div class="mb-3">
+                    <input class="form-control mb-2" id="tasksByUserId" placeholder="User ID for tasks">
+                    <button class="btn btn-info" onclick="getTasksByUser()">Get Tasks for User</button>
+                </div>
+
+                <pre id="tasksOutput" class="bg-white p-3"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const api = 'http://localhost:8080';
+
+        async function getUsers() {
+            const res = await fetch(`${api}/users`);
+            const data = await res.json();
+            document.getElementById('usersOutput').innerText = JSON.stringify(data, null, 2);
+        }
+
+        async function createUser() {
+            const password = document.getElementById('userPassword').value;
+            const email = document.getElementById('userEmail').value;
+
+            const response = await fetch(`${api}/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password, email })
+            });
+
+            const result = await response.text(); // чтобы точно увидеть raw текст
+            console.log('Status:', response.status);
+            console.log('Response:', result);
+
+            if (!response.ok) {
+                alert(`Ошибка при создании пользователя: ${result}`);
+                return;
+            }
+
+            getUsers();
+        }
+
+
+        async function editUser() {
+            const id = document.getElementById('editUserId').value;
+            const email = document.getElementById('editUserEmail').value;
+            const password = document.getElementById('editUserPassword').value;  // Получаем пароль
+
+            await fetch(`${api}/users/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })  // Передаем email и password
+            });
+
+            getUsers();
+        }
+
+
+        async function deleteUser() {
+            const id = document.getElementById('deleteUserId').value;
+            await fetch(`${api}/users/${id}`, { method: 'DELETE' });
+            getUsers();
+        }
+
+        async function getTasks() {
+            const res = await fetch(`${api}/tasks`);
+            const data = await res.json();
+            document.getElementById('tasksOutput').innerText = JSON.stringify(data, null, 2);
+        }
+
+        async function createTask() {
+            const task = document.getElementById('taskContent').value;
+            const user_id = parseInt(document.getElementById('taskUserId').value);
+            await fetch(`${api}/tasks`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task, is_done: false, user_id })
+            });
+            getTasks();
+        }
+
+        async function editTask() {
+            const id = document.getElementById('editTaskId').value;
+            const task = document.getElementById('editTaskContent').value;
+            const is_done = document.getElementById('editTaskDone').value === 'true';
+            await fetch(`${api}/tasks/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task, is_done })
+            });
+            getTasks();
+        }
+
+        async function deleteTask() {
+            const id = document.getElementById('deleteTaskId').value;
+            await fetch(`${api}/tasks/${id}`, { method: 'DELETE' });
+            getTasks();
+        }
+
+        async function getTasksByUser() {
+            const id = document.getElementById('tasksByUserId').value; // Получаем ID из формы
+            const res = await fetch(`${api}/user/${id}/tasks`); // Запрос по правильному маршруту
+
+            if (!res.ok) {
+                alert('Ошибка при получении задач');
+                return;
+            }
+
+            const data = await res.json();
+            document.getElementById('tasksOutput').innerText = JSON.stringify(data, null, 2); // Отображаем данные
+        }
+
+
+
+    </script>
+</body>
+
+</html>
